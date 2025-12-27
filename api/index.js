@@ -114,10 +114,10 @@ app.post("/clear", (req, res) => {
 ====================== */
 module.exports = app;
 
-if (process.env.NODE_ENV !== "production") {
-  const PORT = 5000;
-  app.listen(PORT, () => {
-    console.log(`✅ Local backend running on http://localhost:${PORT}`);
-  });
-}
+// if (process.env.NODE_ENV !== "production") {
+//   const PORT = 5000;
+//   app.listen(PORT, () => {
+//     console.log(`✅ Local backend running on http://localhost:${PORT}`);
+//   });
+// }
 
