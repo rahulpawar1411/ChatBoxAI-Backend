@@ -26,24 +26,18 @@ app.use(express.json());
 // TEMP CHAT STORAGE
 // ======================
 const CHAT_FILE = path.join(process.cwd(), "tempChats.json");
-
-if (!fs.existsSync(CHAT_FILE)) {
-  fs.writeFileSync(CHAT_FILE, "[]", "utf-8");
-}
+if (!fs.existsSync(CHAT_FILE)) fs.writeFileSync(CHAT_FILE, "[]", "utf-8");
 
 let chats = JSON.parse(fs.readFileSync(CHAT_FILE, "utf-8") || "[]");
-
-const saveChats = () =>
-  fs.writeFileSync(CHAT_FILE, JSON.stringify(chats, null, 2));
-
-const clearChats = () => {
-  chats = [];
-  saveChats();
-};
+const saveChats = () => fs.writeFileSync(CHAT_FILE, JSON.stringify(chats, null, 2));
+const clearChats = () => { chats = []; saveChats(); };
 
 // ======================
 // OPENAI CONFIG
 // ======================
+if (!process.env.OPENAI_API_KEY) {
+  console.warn("⚠️ OPENAI_API_KEY is missing in environment variables!");
+}
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -72,14 +66,15 @@ Services:
 // ======================
 // HEALTH CHECK
 // ======================
-app.get("/", (req, res) => {
-  res.send("✅ Backend is running");
-});
+app.get("/", (req, res) => res.send("✅ Backend is running"));
 
 // ======================
 // ASK ENDPOINT
 // ======================
 app.post("/ask", async (req, res) => {
+  if (!process.env.OPENAI_API_KEY)
+    return res.json({ answer: "AI key missing. Check backend environment variables." });
+
   const { question } = req.body;
   if (!question) return res.json({ answer: "Please ask a question." });
 
@@ -112,16 +107,6 @@ app.post("/clear", (req, res) => {
 });
 
 // ======================
-// EXPORT SERVERLESS HANDLER FOR VERCEL
+// EXPORT SERVERLESS HANDLER
 // ======================
 module.exports = serverless(app);
-
-// ======================
-// LOCAL DEVELOPMENT (optional)
-// ======================
-// if (require.main === module) {
-//   const PORT = process.env.PORT || 5000;
-//   app.listen(PORT, () =>
-//     console.log(`✅ Local backend running on http://localhost:${PORT}`)
-//   );
-// }
