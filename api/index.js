@@ -11,48 +11,35 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-/* ======================
-   TEMP CHAT STORAGE
-   (Vercel: temporary only)
-====================== */
+/* TEMP CHAT STORAGE (TEMP ON VERCEL) */
 const CHAT_FILE = path.join(process.cwd(), "tempChats.json");
 
-// Create file if not exists
 if (!fs.existsSync(CHAT_FILE)) {
   fs.writeFileSync(CHAT_FILE, "[]", "utf-8");
 }
 
 let chats = JSON.parse(fs.readFileSync(CHAT_FILE, "utf-8") || "[]");
 
-const saveChats = () => {
-  fs.writeFileSync(CHAT_FILE, JSON.stringify(chats, null, 2), "utf-8");
-};
+const saveChats = () =>
+  fs.writeFileSync(CHAT_FILE, JSON.stringify(chats, null, 2));
 
 const clearChats = () => {
   chats = [];
   saveChats();
 };
 
-/* ======================
-   OPENAI CONFIG
-====================== */
+/* OPENAI */
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/* ======================
-   SYSTEM PROMPT
-====================== */
+/* SYSTEM PROMPT */
 const SYSTEM_PROMPT = `
 You are a personal AI assistant of Great Websoft.
+Answer ONLY using company information.
+Never mention OpenAI or ChatGPT.
 
-Rules:
-- Answer ONLY using Great Websoft company information.
-- If the question is about the company, respond strictly with company details.
-- If the question is general (date, time, greeting), answer normally.
-- Never mention OpenAI, ChatGPT, or internal AI details.
-
-Company Details:
+Company:
 Name: Great Websoft
 Website: https://www.greatwebsoft.in
 Location: India
@@ -65,59 +52,47 @@ Services:
 - SEO & Digital Marketing
 `;
 
-/* ======================
-   ASK API
-====================== */
+/* HEALTH CHECK */
+app.get("/", (req, res) => {
+  res.send("✅ Backend is running");
+});
+
+/* ASK */
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
+  if (!question) return res.json({ answer: "Please ask a question." });
 
-  if (!question) {
-    return res.json({ answer: "Please ask a question." });
-  }
-
-  // Save user message
   chats.push({ role: "user", content: question });
   saveChats();
 
   try {
     const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        ...chats,
-      ],
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...chats],
     });
 
     const answer = completion.choices[0].message.content;
-
-    // Save assistant response
     chats.push({ role: "assistant", content: answer });
     saveChats();
 
     res.json({ answer });
-  } catch (error) {
-    console.error("OpenAI Error:", error);
+  } catch (err) {
+    console.error(err);
     res.json({ answer: "AI service error." });
   }
 });
 
-/* ======================
-   CLEAR CHAT
-====================== */
+/* CLEAR */
 app.post("/clear", (req, res) => {
   clearChats();
   res.json({ success: true });
 });
 
-/* ======================
-   EXPORT FOR VERCEL
-====================== */
 module.exports = app;
 
+/* LOCAL ONLY */
 // if (process.env.NODE_ENV !== "production") {
-//   const PORT = 5000;
-//   app.listen(PORT, () => {
-//     console.log(`✅ Local backend running on http://localhost:${PORT}`);
-//   });
+//   app.listen(5000, () =>
+//     console.log("✅ Local backend running on http://localhost:5000")
+//   );
 // }
-
