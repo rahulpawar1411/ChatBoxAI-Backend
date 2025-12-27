@@ -1,0 +1,12 @@
+{
+  "companyName": "Great Web Soft",
+  "about": "Great Web Soft is an IT solutions company.",
+  "services": [
+    "Software Development",
+    "Mobile App Development",
+    "Web Design",
+    "Maintenance & Support"
+  ],
+  "location": "India",
+  "workingHours": "Mon–Fri, 9 AM – 6 PM"
+}
