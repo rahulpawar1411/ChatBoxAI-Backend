@@ -9,17 +9,22 @@ const serverless = require("serverless-http");
 dotenv.config();
 
 const app = express();
-app.use(cors());
+
+// ======================
+// CORS
+// ======================
+app.use(
+  cors({
+    origin: "https://chat-box-ai-frontend.vercel.app", // frontend URL
+    methods: ["GET", "POST"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
-app.use(cors({
-  origin: "https://chat-box-ai-frontend.vercel.app",
-  methods: ["GET", "POST"],
-  credentials: true
-}));
-
-
-/* TEMP CHAT STORAGE (TEMP ON VERCEL) */
+// ======================
+// TEMP CHAT STORAGE
+// ======================
 const CHAT_FILE = path.join(process.cwd(), "tempChats.json");
 
 if (!fs.existsSync(CHAT_FILE)) {
@@ -36,12 +41,16 @@ const clearChats = () => {
   saveChats();
 };
 
-/* OPENAI */
+// ======================
+// OPENAI CONFIG
+// ======================
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-/* SYSTEM PROMPT */
+// ======================
+// SYSTEM PROMPT
+// ======================
 const SYSTEM_PROMPT = `
 You are a personal AI assistant of Great Websoft.
 Answer ONLY using company information.
@@ -60,12 +69,16 @@ Services:
 - SEO & Digital Marketing
 `;
 
-/* HEALTH CHECK */
+// ======================
+// HEALTH CHECK
+// ======================
 app.get("/", (req, res) => {
   res.send("✅ Backend is running");
 });
 
-/* ASK */
+// ======================
+// ASK ENDPOINT
+// ======================
 app.post("/ask", async (req, res) => {
   const { question } = req.body;
   if (!question) return res.json({ answer: "Please ask a question." });
@@ -85,21 +98,27 @@ app.post("/ask", async (req, res) => {
 
     res.json({ answer });
   } catch (err) {
-    console.error(err);
+    console.error("OpenAI error:", err);
     res.json({ answer: "AI service error." });
   }
 });
 
-/* CLEAR */
+// ======================
+// CLEAR CHAT
+// ======================
 app.post("/clear", (req, res) => {
   clearChats();
   res.json({ success: true });
 });
 
-// Export serverless handler for Vercel
+// ======================
+// EXPORT SERVERLESS HANDLER FOR VERCEL
+// ======================
 module.exports = serverless(app);
 
-// Local development server
+// ======================
+// LOCAL DEVELOPMENT (optional)
+// ======================
 // if (require.main === module) {
 //   const PORT = process.env.PORT || 5000;
 //   app.listen(PORT, () =>
