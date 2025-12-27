@@ -4,12 +4,20 @@ const fs = require("fs");
 const path = require("path");
 const dotenv = require("dotenv");
 const OpenAI = require("openai");
+const serverless = require("serverless-http");
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use(cors({
+  origin: "https://chat-box-ai-frontend.vercel.app",
+  methods: ["GET", "POST"],
+  credentials: true
+}));
+
 
 /* TEMP CHAT STORAGE (TEMP ON VERCEL) */
 const CHAT_FILE = path.join(process.cwd(), "tempChats.json");
@@ -88,11 +96,13 @@ app.post("/clear", (req, res) => {
   res.json({ success: true });
 });
 
-module.exports = app;
+// Export serverless handler for Vercel
+module.exports = serverless(app);
 
-/* LOCAL ONLY */
-// if (process.env.NODE_ENV !== "production") {
-//   app.listen(5000, () =>
-//     console.log("✅ Local backend running on http://localhost:5000")
+// Local development server
+// if (require.main === module) {
+//   const PORT = process.env.PORT || 5000;
+//   app.listen(PORT, () =>
+//     console.log(`✅ Local backend running on http://localhost:${PORT}`)
 //   );
 // }
